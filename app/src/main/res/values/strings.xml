@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="calc">Calc</string>
+    <string name="zero">Zero</string>
+</resources>
