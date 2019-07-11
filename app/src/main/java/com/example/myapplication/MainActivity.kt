@@ -4,27 +4,23 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
-import android.view.View
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import java.io.File
 import android.Manifest.permission
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.widget.ImageView
-import androidx.core.content.ContextCompat
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.core.net.toUri
-import androidx.core.view.isVisible
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var textVievForCalculateButton : TextView
-    lateinit var calcButton : Button
-    lateinit var zeroButton : Button
-    lateinit var imageView : ImageView
+    lateinit var imageViewsList : List<ImageView>
+    lateinit var filesList : ArrayList<File>
+    lateinit var recyclerView : RecyclerView
 
     fun printShit(): String {
         return (0..100).random().toString()
@@ -35,30 +31,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         requestPermissions(arrayOf(permission.READ_EXTERNAL_STORAGE), 0)
+        filesList = ArrayList()
 
-        textVievForCalculateButton = findViewById(R.id.forCalcButton)
-        textVievForCalculateButton.text = printShit()
+        imageViewsList = listOf(
+            findViewById(R.id.imageView),
+            findViewById(R.id.imageView2),
+            findViewById(R.id.imageView3),
+            findViewById(R.id.imageView4),
+            findViewById(R.id.imageView5),
+            findViewById(R.id.imageView6)
+        )
 
-
-        val clickListener = View.OnClickListener {
-            when (it){
-                calcButton -> {
-                    textVievForCalculateButton.text = printShit()
-                }
-                zeroButton -> {
-                    textVievForCalculateButton.text = "0"
-                    Toast.makeText(this, "Zero Button has been pressed", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        calcButton = findViewById(R.id.calc)
-        calcButton.setOnClickListener(clickListener)
-
-        zeroButton = findViewById(R.id.zero)
-        zeroButton.setOnClickListener(clickListener)
-
-        imageView = findViewById(R.id.imageView)
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = Adapter(imageViewsList)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -67,26 +53,47 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Permission is granted", Toast.LENGTH_LONG).show()
         }*/
         val rootFolder = Environment.getRootDirectory()
-        val filesList = getListFiles(File("storage/emulated/0/DCIM/Camera"))
+        getListFiles(File("storage/emulated/0/DCIM/Camera"))
 
-
-        if(filesList.first().exists()) {
-            //Toast.makeText(this, filesList.first().absolutePath.toUri().toString(), Toast.LENGTH_LONG).show()
-            val file = BitmapFactory.decodeFile(filesList.first().absolutePath)
-            imageView.setImageURI(filesList.first().absolutePath.toUri())
+        if(filesList.isNotEmpty()) {
+            var i = 0
+            for(file: File in filesList){
+                if(i == 6)
+                    i = 0
+                imageViewsList[i].setImageURI(file.toUri())
+                i++
+            }
         }
     }
 
-    fun getListFiles(parentDir: File): List<File> {
-        val inFiles = ArrayList<File>()
+    fun getListFiles(parentDir: File) {
         val files = parentDir.listFiles()
         if(files != null) {
             for (file in files) {
                 if (file.isFile) {
-                    inFiles.add(file)
+                    filesList.add(file)
                 }
             }
         }
-        return inFiles
     }
+}
+
+class Adapter(private val values: List<ImageView>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_item_view, parent, false)
+        return ViewHolder(itemView)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.textView = values[position]
+    }
+
+    override fun getItemCount() = values.size
+
+class ViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView!!){
+    var textView: ImageView? = null
+    init{
+        textView = itemView?.findViewById(R.id.imageView7)
+    }
+}
 }
