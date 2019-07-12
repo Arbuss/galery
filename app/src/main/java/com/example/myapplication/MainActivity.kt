@@ -5,11 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import java.io.File
 import android.Manifest.permission
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
-import android.provider.MediaStore
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,9 +15,12 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.*
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
-    lateinit var filesList: ArrayList<File>
+    lateinit var filesList: ArrayList<Uri>
     lateinit var recyclerView: RecyclerView
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -35,52 +35,82 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        //getListFiles(File("storage/emulated/0/DCIM/Camera"))
-        recyclerView.adapter = Adapter(filesList)
+        /*GlobalScope.launch {
+            getListFiles(File("storage/emulated/0/DCIM/Camera"))
+        }*/
+        //Toast.makeText(this, MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString(), Toast.LENGTH_LONG).show()
+        //Toast.makeText(this, MediaStore.Images.Media.INTERNAL_CONTENT_URI.toString(), Toast.LENGTH_LONG).show() //media, root, некоторые общедоступные
 
-        //val photoPickerIntent = Intent(Intent.ACTION_PICK)
-        //photoPickerIntent.type = "image/*"
-        //startActivityForResult(photoPickerIntent, 1)
+        /*GlobalScope.launch {
+
+        }*/
+
+        //val filenew = File(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString())
+        //val flag = File(filenew.path).absolutePath
+        //recursiveWalk(File("storage/emulated").listFiles())
+        //recursiveWalk(File("storage").listFiles())
+
+        /*val dir = Environment.getRootDirectory().path
+        val dataDir = Environment.getDataDirectory().path
+        val downloadDir = Environment.getDownloadCacheDirectory().path
+        val extStor = Environment.getExternalStorageDirectory().path*/
+        //recursiveWalk(File("${Environment.getRootDirectory().path}/media").listFiles())
+        //GlobalScope.launch {
+            recursiveWalk(File(Environment.getExternalStorageDirectory().path).listFiles())
+        //}
+
+        //recursiveWalk(File("data").listFiles())
+        //recyclerView.adapter = Adapter(filesList)
+
+        GlobalScope.launch {
+            recyclerView.adapter = Adapter(filesList)
+        }
     }
 
-    /*override fun onActivityResult(requestCode: Int, resultCode: Int, imageReturnedIntent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, imageReturnedIntent)
+    fun isMedia(extension : String) : Boolean {
+        return extension == "jpg" || extension == "png" || extension == "gif" || extension == "jpeg"
+            || extension == "avi" || extension == "mkv" || extension == "mp4"
+            || extension == "mp3"
+    }
 
-        //val bitmap : Bitmap = findViewById(R.id.imageView1)
-        val shittyImageView = findViewById<ImageView>(R.id.imageView1)
-        when (requestCode){
-            1 -> {
-                if(resultCode == RESULT_OK){
-                    val selectedImage = imageReturnedIntent?.data
-                    shittyImageView.setImageURI(selectedImage)
-                    //bitmap = MediaStore.Images.Media.getBitmap(contentResolver, selectedImage)
-                    //shittyImageView.setImageBitmap(MediaStore.Images.Media.getBitmap(contentResolver, selectedImage))
-                }
+    fun recursiveWalk(files : Array<File>){
+        if(files == null) return
+        for (file in files) {
+            if(file.isFile && isMedia(file.extension))
+                GlobalScope.launch { filesList.add(file.toUri()) }
+            if(file.isDirectory) {
+                recursiveWalk(file.listFiles())
             }
         }
-    }*/
+    }
 
     fun getListFiles(parentDir: File) {
-        val files = parentDir.listFiles()
-        if (files != null) {
-            for (file in files) {
-                if (file.isFile) {
-                    filesList.add(file)
+        GlobalScope.async {
+            val files = parentDir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile) {
+                        filesList.add(file.toUri())
+                    }
                 }
             }
         }
     }
 
-    class Adapter(private val values: List<File>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
+    class Adapter(private val values: List<Uri>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_item_view, parent, false)
             return ViewHolder(itemView)
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.imageView1?.setImageURI(values[position].toUri())
+            //GlobalScope.async {
+                Picasso.get().load(values[position]).into(holder.imageView1)
+            //holder.imageView1!!.setImageURI(values[position])
+            //}
         }
 
         override fun getItemCount() = values.size
