@@ -6,7 +6,7 @@ import android.os.Bundle
 import java.io.File
 import android.Manifest.permission
 import android.net.Uri
-import android.os.Environment
+import android.os.AsyncTask
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.*
-import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
     lateinit var filesList: ArrayList<Uri>
@@ -38,36 +38,12 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        /*GlobalScope.launch {
-            getListFiles(File("storage/emulated/0/DCIM/Camera"))
-        }*/
-        //Toast.makeText(this, MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString(), Toast.LENGTH_LONG).show()
-        //Toast.makeText(this, MediaStore.Images.Media.INTERNAL_CONTENT_URI.toString(), Toast.LENGTH_LONG).show() //media, root, некоторые общедоступные
 
-        /*GlobalScope.launch {
+        val lit = LoadImgsTask()
+        lit.execute(File("/storage/emulated/0").listFiles())
+        val filesList = lit.get()
 
-        }*/
-
-        //val filenew = File(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString())
-        //val flag = File(filenew.path).absolutePath
-        //recursiveWalk(File("storage/emulated").listFiles())
-        //recursiveWalk(File("storage").listFiles())
-
-        /*val dir = Environment.getRootDirectory().path
-        val dataDir = Environment.getDataDirectory().path
-        val downloadDir = Environment.getDownloadCacheDirectory().path
-        val extStor = Environment.getExternalStorageDirectory().path*/
-        //recursiveWalk(File("${Environment.getRootDirectory().path}/media").listFiles())
-        //GlobalScope.launch {
-            recursiveWalk(File(Environment.getExternalStorageDirectory().path).listFiles())
-        //}
-
-        //recursiveWalk(File("data").listFiles())
-        //recyclerView.adapter = Adapter(filesList)
-
-        GlobalScope.launch {
-            recyclerView.adapter = Adapter(filesList)
-        }
+        recyclerView.adapter = Adapter(filesList)
     }
 
     fun isMedia(extension : String) : Boolean {
@@ -76,7 +52,7 @@ class MainActivity : AppCompatActivity() {
             || extension == "mp3"
     }
 
-    fun recursiveWalk(files : Array<File>){
+    suspend fun recursiveWalk(files : Array<File>){
         if(files == null) return
         for (file in files) {
             if(file.isFile && isMedia(file.extension))
@@ -107,10 +83,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            //GlobalScope.async {
-                Picasso.get().load(values[position]).into(holder.imageView1)
+            //Picasso.get().load(values[position]).into(holder.imageView1)
+            Picasso.get().load(values[position]).fit().centerCrop().into(holder.imageView1)
+            //Picasso.get().load(values[position]).resize(130, 130).into(holder.imageView1)
             //holder.imageView1!!.setImageURI(values[position])
-            //}
+
         }
 
         override fun getItemCount() = values.size
@@ -121,6 +98,39 @@ class MainActivity : AppCompatActivity() {
             init {
                 imageView1 = itemView?.findViewById(R.id.imageView1)
             }
+        }
+    }
+
+    class LoadImgsTask : AsyncTask<Array<File>, Array<Uri>, ArrayList<Uri>>() {
+
+        fun isMedia(extension : String) : Boolean {
+            return extension == "jpg" || extension == "png" || extension == "gif" || extension == "jpeg"
+                    || extension == "avi" || extension == "mkv" || extension == "mp4"
+                    || extension == "mp3"
+        }
+
+        fun recursiveWalk(files : Array<File>, outputArray : ArrayList<Uri>){
+            for (file in files) {
+                if(file.isFile && isMedia(file.extension))
+                    GlobalScope.launch { outputArray.add(file.toUri()) }
+                if(file.isDirectory) {
+                    recursiveWalk(file.listFiles(), outputArray)
+                }
+            }
+        }
+
+        override fun doInBackground(vararg files: Array<File>): ArrayList<Uri>? {
+            val list: ArrayList<Uri> = ArrayList()
+            recursiveWalk(files[0], list)
+            return list
+        }
+
+        override fun onPostExecute(result: ArrayList<Uri>?) {
+            super.onPostExecute(result)
+        }
+
+        override fun onProgressUpdate(vararg values: Array<Uri>?) {
+            super.onProgressUpdate(*values)
         }
     }
 }
