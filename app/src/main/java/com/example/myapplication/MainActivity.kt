@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import kotlin.collections.ArrayList
+import androidx.core.content.FileProvider
 
 class MainActivity : AppCompatActivity() {
     lateinit var filesList: ArrayList<Uri>
@@ -32,9 +33,6 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
-
-
-
     }
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -51,12 +49,20 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
     fun clickImage(view: View){
 
-        val string = view.tag.toString()
-        val vtag = Uri.parse(string.substring(8))
-        val legalUri = vtag.pathSegments
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(vtag, "image/*")
-        startActivity(intent)
+//        val string = view.tag.toString()
+//        val vtag = Uri.parse(string.substring(8))
+//        val legalUri = vtag.pathSegments
+//        val intent = Intent(Intent.ACTION_VIEW)
+//        intent.setDataAndType(vtag, "image/*")
+//        startActivity(intent)
+
+        val string = view.tag.toString() //file:///storage/emulated/0/DCIM/Camera/Selfies/IMG_20190430_121822.jpg
+        val file = File("storage/emulated/0/DCIM/Camera/Selfies/IMG_20190430_121822.jpg")
+        val data : Uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID, file)
+        //this.grantUriPermission(this.packageName, data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        //val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(data, "image/*")
+        //this.startActivity(intent)
     }
 
         class Adapter(private val values: List<Uri>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
