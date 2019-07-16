@@ -48,75 +48,16 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
     fun clickImage(view: View){
+        val data : Uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID, File(view.tag.toString().substring(8)))
+        this.grantUriPermission(this.packageName, data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-//        val string = view.tag.toString()
-//        val vtag = Uri.parse(string.substring(8))
-//        val legalUri = vtag.pathSegments
-//        val intent = Intent(Intent.ACTION_VIEW)
-//        intent.setDataAndType(vtag, "image/*")
-//        startActivity(intent)
-
-        val string = view.tag.toString() //file:///storage/emulated/0/DCIM/Camera/Selfies/IMG_20190430_121822.jpg
-        val file = File("storage/emulated/0/DCIM/Camera/Selfies/IMG_20190430_121822.jpg")
-        val data : Uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID, file)
-        //this.grantUriPermission(this.packageName, data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        //val intent = Intent(Intent.ACTION_VIEW)
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         intent.setDataAndType(data, "image/*")
-        //this.startActivity(intent)
+        this.startActivity(intent)
     }
 
-        class Adapter(private val values: List<Uri>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-                val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_item_view, parent, false)
-                return ViewHolder(itemView)
-            }
 
-            override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-                holder.imageButton!!.tag = values[position]
-                Picasso.get().load(values[position]).fit().centerInside().into(holder.imageButton)
-            }
 
-            override fun getItemCount() = values.size
 
-            class ViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView!!) {
-                var imageButton: ImageButton? = null
-
-                init {
-                    imageButton = itemView?.findViewById(R.id.image_button)
-                }
-            }
-        }
-
-        class LoadImgsTask : AsyncTask<Array<File>, Array<Uri>, ArrayList<Uri>>() {
-
-            fun isMedia(extension : String) : Boolean {
-                return extension == "jpg" || extension == "png" || extension == "gif" || extension == "jpeg"
-                        || extension == "avi" || extension == "mkv" || extension == "mp4"
-                        || extension == "mp3"
-            }
-
-            fun recursiveWalk(files : Array<File>, outputArray : ArrayList<Uri>){
-                for (file in files) {
-                    if(file.isFile && isMedia(file.extension) && !file.absolutePath.contains("cache") && !file.absolutePath.contains("thumbnails"))
-                        outputArray.add(file.toUri())
-                    if(file.isDirectory) {
-                        recursiveWalk(file.listFiles(), outputArray)
-                    }
-                }
-            }
-
-            override fun doInBackground(vararg files: Array<File>): ArrayList<Uri>? {
-                val list: ArrayList<Uri> = ArrayList()
-                recursiveWalk(files[0], list)
-                return list
-            }
-
-            override fun onPostExecute(result: ArrayList<Uri>?) {
-                super.onPostExecute(result)
-            }
-
-            override fun onProgressUpdate(vararg values: Array<Uri>?) {
-                super.onProgressUpdate(*values)
-            }
-        }
 }
