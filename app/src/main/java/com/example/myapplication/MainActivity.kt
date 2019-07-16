@@ -1,24 +1,14 @@
 package com.example.myapplication
 
-import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import java.io.File
 import android.Manifest.permission
-import android.content.Intent
 import android.net.Uri
-import android.os.AsyncTask
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageButton
+import android.os.Build
+import android.os.Bundle
 import androidx.annotation.RequiresApi
-import androidx.core.net.toUri
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.picasso.Picasso
-import kotlin.collections.ArrayList
-import androidx.core.content.FileProvider
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     lateinit var filesList: ArrayList<Uri>
@@ -45,19 +35,4 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView.adapter = Adapter(filesList)
     }
-
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
-    fun clickImage(view: View){
-        val data : Uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID, File(view.tag.toString().substring(8)))
-        this.grantUriPermission(this.packageName, data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.setDataAndType(data, "image/*")
-        this.startActivity(intent)
-    }
-
-
-
-
 }
