@@ -1,11 +1,15 @@
 package com.example.myapplication
 
 import android.Manifest.permission
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import androidx.core.net.toFile
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
@@ -33,6 +37,16 @@ class MainActivity : AppCompatActivity() {
         lit.execute(File("/storage/emulated/0").listFiles())
         val filesList = lit.get()
 
-        recyclerView.adapter = Adapter(filesList)
+        recyclerView.adapter = Adapter(filesList, object:ButtonCallback {
+            override fun onOpen(context: Context, uri: Uri) {
+                val data : Uri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID, uri.toFile())
+                context.grantUriPermission(context.packageName, data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                intent.setDataAndType(data, "image/*")
+                context.startActivity(intent)
+            }
+        })
     }
 }
